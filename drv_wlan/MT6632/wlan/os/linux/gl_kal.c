@@ -877,7 +877,9 @@ WLAN_STATUS kalRxIndicateOnePkt(IN P_GLUE_INFO_T prGlueInfo, IN PVOID pvPkt)
 
 	}
 #endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 	prNetDev->last_rx = jiffies;
+#endif
 #if CFG_SUPPORT_SNIFFER
 	if (prGlueInfo->fgIsEnableMon) {
 		skb_reset_mac_header(prSkb);
@@ -963,6 +965,10 @@ kalIndicateStatusAndComplete(IN P_GLUE_INFO_T prGlueInfo, IN WLAN_STATUS eStatus
 	struct cfg80211_bss *bss;
 	UINT_8 ucChannelNum;
 	P_BSS_DESC_T prBssDesc = NULL;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+	struct cfg80211_roam_info roam_info = {};
+#endif
 
 	GLUE_SPIN_LOCK_DECLARATION();
 
@@ -1061,12 +1067,24 @@ kalIndicateStatusAndComplete(IN P_GLUE_INFO_T prGlueInfo, IN WLAN_STATUS eStatus
 									  (ucChannelNum, KAL_BAND_5GHZ));
 				}
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+				roam_info.channel     = prChannel;
+				roam_info.bssid       = arBssid;
+				roam_info.req_ie      = prGlueInfo->aucReqIe;
+				roam_info.req_ie_len  = prGlueInfo->u4ReqIeLength;
+				roam_info.resp_ie     = prGlueInfo->aucRspIe;
+				roam_info.resp_ie_len = prGlueInfo->u4RspIeLength;
+#endif
 				cfg80211_roamed(prGlueInfo->prDevHandler,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+						&roam_info, GFP_KERNEL);
+#else
 						prChannel,
 						arBssid,
 						prGlueInfo->aucReqIe,
 						prGlueInfo->u4ReqIeLength,
 						prGlueInfo->aucRspIe, prGlueInfo->u4RspIeLength, GFP_KERNEL);
+#endif
 			} else {
 				cfg80211_connect_result(prGlueInfo->prDevHandler, arBssid,
 							prGlueInfo->aucReqIe,
@@ -4505,7 +4523,11 @@ VOID kalSchedScanResults(IN P_GLUE_INFO_T prGlueInfo)
 {
 	ASSERT(prGlueInfo);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0)
 	cfg80211_sched_scan_results(priv_to_wiphy(prGlueInfo));
+#else
+	cfg80211_sched_scan_results(priv_to_wiphy(prGlueInfo),0);
+#endif
 
 }
 

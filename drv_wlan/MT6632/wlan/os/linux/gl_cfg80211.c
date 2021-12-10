@@ -129,7 +129,11 @@
 /*----------------------------------------------------------------------------*/
 int
 mtk_cfg80211_change_iface(struct wiphy *wiphy,
-			  struct net_device *ndev, enum nl80211_iftype type, u32 *flags, struct vif_params *params)
+			  struct net_device *ndev, enum nl80211_iftype type,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0)
+			  u32 *flags,
+#endif
+			  struct vif_params *params)
 {
 	P_GLUE_INFO_T prGlueInfo = NULL;
 	WLAN_STATUS rStatus = WLAN_STATUS_SUCCESS;

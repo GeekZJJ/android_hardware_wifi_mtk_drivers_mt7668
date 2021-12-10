@@ -1,0 +1,10 @@
+#!/bin/sh
+
+export PATH=$PATH:$(realpath ..)/toolchain/bin
+export KBUILD_OUTPUT=out
+export ARCH=arm64
+export CROSS_COMPILE=aarch64-linux-gnu-
+export INSTALL_MOD_PATH=ko
+export INSTALL_MOD_STRIP=1
+
+make KERNELDIR=$(realpath ..)/kernel
