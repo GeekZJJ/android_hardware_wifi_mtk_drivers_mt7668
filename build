@@ -8,3 +8,4 @@ export INSTALL_MOD_PATH=ko
 export INSTALL_MOD_STRIP=1
 
 make KERNELDIR=$(realpath ..)/kernel
+# ${CROSS_COMPILE}strip  --strip-debug drv_wlan/MT6632/wlan/wlan_mt76x8_sdio.ko
