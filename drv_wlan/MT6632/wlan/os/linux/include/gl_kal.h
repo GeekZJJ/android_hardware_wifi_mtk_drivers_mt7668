@@ -1035,7 +1035,11 @@ VOID kalScanDone(IN P_GLUE_INFO_T prGlueInfo, IN ENUM_KAL_NETWORK_TYPE_INDEX_T e
 
 UINT_32 kalRandomNumber(VOID);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 VOID kalTimeoutHandler(unsigned long arg);
+#else
+VOID kalTimeoutHandler(struct timer_list *t);
+#endif
 
 VOID kalSetEvent(P_GLUE_INFO_T pr);
 

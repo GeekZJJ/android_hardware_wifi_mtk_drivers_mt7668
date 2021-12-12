@@ -3755,10 +3755,19 @@ static WLAN_STATUS nicTxDirectStartXmitMain(struct sk_buff *prSkb, P_MSDU_INFO_T
 * \retval none
 */
 /*----------------------------------------------------------------------------*/
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 void nicTxDirectTimerCheckSkbQ(unsigned long data)
+#else
+void nicTxDirectTimerCheckSkbQ(struct timer_list *t)
+#endif
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	P_GLUE_INFO_T prGlueInfo = (P_GLUE_INFO_T)data;
 	P_ADAPTER_T prAdapter = prGlueInfo->prAdapter;
+#else
+	P_ADAPTER_T prAdapter = from_timer(prAdapter, t, rTxDirectSkbTimer);
+	P_GLUE_INFO_T prGlueInfo = container_of((void *)prAdapter, GLUE_INFO_T, prAdapter);
+#endif
 
 	if (skb_queue_len(&prAdapter->rTxDirectSkbQueue))
 		nicTxDirectStartXmit(NULL, prGlueInfo);
@@ -3776,10 +3785,19 @@ void nicTxDirectTimerCheckSkbQ(unsigned long data)
 * \retval none
 */
 /*----------------------------------------------------------------------------*/
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 void nicTxDirectTimerCheckHifQ(unsigned long data)
+#else
+void nicTxDirectTimerCheckHifQ(struct timer_list *t)
+#endif
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	P_GLUE_INFO_T prGlueInfo = (P_GLUE_INFO_T)data;
 	P_ADAPTER_T prAdapter = prGlueInfo->prAdapter;
+#else
+	P_ADAPTER_T prAdapter = from_timer(prAdapter, t, rTxDirectHifTimer);
+	P_GLUE_INFO_T prGlueInfo = container_of((void *)prAdapter, GLUE_INFO_T, prAdapter);
+#endif
 	UINT_8 ucHifTc = 0;
 	UINT_32 u4StaPsBitmap, u4BssAbsentBitmap;
 	UINT_8 ucStaRecIndex, ucBssIndex;

@@ -930,24 +930,40 @@ out:
 	return ret;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations dbglevel_ops = {
 	.owner = THIS_MODULE,
 	.read = procDbgLevelRead,
 	.write = procDbgLevelWrite,
 };
+#else
+static const struct proc_ops dbglevel_ops = {
+	.proc_read = procDbgLevelRead,
+	.proc_write = procDbgLevelWrite,
+};
+#endif
 
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations csidata_ops = {
 	.owner = THIS_MODULE,
 	.read = procCsiDataRead,
 	.open = procCsiDataOpen,
 	.release = procCsiDataRelease,
 };
+#else
+static const struct proc_ops csidata_ops = {
+	.proc_read = procCsiDataRead,
+	.proc_open = procCsiDataOpen,
+	.proc_release = procCsiDataRelease,
+};
+#endif
 
 
 #if WLAN_INCLUDE_PROC
 #if	CFG_SUPPORT_EASY_DEBUG
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations efusedump_ops = {
 	.owner	 = THIS_MODULE,
 	.open	 = procEfuseDumpOpen,
@@ -955,25 +971,54 @@ static const struct file_operations efusedump_ops = {
 	.llseek  = seq_lseek,
 	.release = seq_release,
 };
+#else
+static const struct proc_ops efusedump_ops = {
+	.proc_open	 = procEfuseDumpOpen,
+	.proc_read	 = seq_read,
+	.proc_lseek  = seq_lseek,
+	.proc_release = seq_release,
+};
+#endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations drivercmd_ops = {
 	.owner = THIS_MODULE,
 	.read = procDriverCmdRead,
 	.write = procDriverCmdWrite,
 };
+#else
+static const struct proc_ops drivercmd_ops = {
+	.proc_read = procDriverCmdRead,
+	.proc_write = procDriverCmdWrite,
+};
+#endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations cfg_ops = {
 	.owner = THIS_MODULE,
 	.read = procCfgRead,
 	.write = procCfgWrite,
 };
+#else
+static const struct proc_ops cfg_ops = {
+	.proc_read = procCfgRead,
+	.proc_write = procCfgWrite,
+};
+#endif
+
 #endif
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations get_txpwr_tbl_ops = {
 	.owner	 = THIS_MODULE,
 	.read = procGetTxpwrTblRead,
 };
+#else
+static const struct proc_ops get_txpwr_tbl_ops = {
+	.proc_read = procGetTxpwrTblRead,
+};
+#endif
 
 /*******************************************************************************
 *                              F U N C T I O N S
@@ -1096,11 +1141,18 @@ static ssize_t procMCRWrite(struct file *file, const char __user *buffer,
 
 }				/* end of procMCRWrite() */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static const struct file_operations mcr_ops = {
 	.owner = THIS_MODULE,
 	.read = procMCRRead,
 	.write = procMCRWrite,
 };
+#else
+static const struct proc_ops mcr_ops = {
+	.proc_read = procMCRRead,
+	.proc_write = procMCRWrite,
+};
+#endif
 
 #if CFG_SUPPORT_DEBUG_FS
 static ssize_t procRoamRead(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)

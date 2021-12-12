@@ -394,6 +394,11 @@ static const struct wiphy_vendor_command mtk_wlan_vendor_ops[] = {
 		},
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = mtk_cfg80211_vendor_get_channel_list
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0))
+		,
+		.policy = VENDOR_CMD_RAW_DATA,
+		.maxattr = 1
+#endif
 	},
 	{
 		{
@@ -402,6 +407,11 @@ static const struct wiphy_vendor_command mtk_wlan_vendor_ops[] = {
 		},
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = mtk_cfg80211_vendor_set_country_code
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0))
+		,
+		.policy = VENDOR_CMD_RAW_DATA,
+		.maxattr = 1
+#endif
 	}
 
 };
@@ -526,7 +536,14 @@ unsigned int _cfg80211_classify8021d(struct sk_buff *skb)
 }
 #endif
 
-#if KERNEL_VERSION(3, 14, 0) <= LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE
+u16 wlanSelectQueue(struct net_device *netdev,
+				  struct sk_buff *skb,
+				  struct net_device *sb_dev)
+{
+	return mtk_wlan_ndev_select_queue(skb);
+}
+#elif KERNEL_VERSION(3, 14, 0) <= LINUX_VERSION_CODE
 u16 wlanSelectQueue(struct net_device *dev, struct sk_buff *skb,
 		    void *accel_priv, select_queue_fallback_t fallback)
 {
@@ -2352,13 +2369,21 @@ static INT_32 wlanProbe(PVOID pvData, PVOID pvDriverData)
 			if (!prAdapter->fgTxDirectInited) {
 				skb_queue_head_init(&prAdapter->rTxDirectSkbQueue);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 				init_timer(&prAdapter->rTxDirectSkbTimer);
 				prAdapter->rTxDirectSkbTimer.data = (unsigned long)prGlueInfo;
 				prAdapter->rTxDirectSkbTimer.function = nicTxDirectTimerCheckSkbQ;
+#else
+				timer_setup(&prAdapter->rTxDirectSkbTimer, nicTxDirectTimerCheckSkbQ, 0);
+#endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 				init_timer(&prAdapter->rTxDirectHifTimer);
 				prAdapter->rTxDirectHifTimer.data = (unsigned long)prGlueInfo;
 				prAdapter->rTxDirectHifTimer.function = nicTxDirectTimerCheckHifQ;
+#else
+				timer_setup(&prAdapter->rTxDirectHifTimer, nicTxDirectTimerCheckHifQ, 0);
+#endif
 
 				prAdapter->fgTxDirectInited = TRUE;
 			}

@@ -1516,8 +1516,13 @@ VOID nicTxDirectClearHifQ(IN P_ADAPTER_T prAdapter);
 VOID nicTxDirectClearStaPsQ(IN P_ADAPTER_T prAdapter, UINT_8 ucStaRecIndex);
 VOID nicTxDirectClearBssAbsentQ(IN P_ADAPTER_T prAdapter, UINT_8 ucBssIndex);
 VOID nicTxDirectClearAllStaPsQ(IN P_ADAPTER_T prAdapter);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 void nicTxDirectTimerCheckSkbQ(unsigned long data);
 void nicTxDirectTimerCheckHifQ(unsigned long data);
+#else
+void nicTxDirectTimerCheckSkbQ(struct timer_list *t);
+void nicTxDirectTimerCheckHifQ(struct timer_list *t);
+#endif
 WLAN_STATUS nicTxDirectStartXmit(struct sk_buff *prSkb, P_GLUE_INFO_T prGlueInfo);
 /* TX Direct functions : END */
 

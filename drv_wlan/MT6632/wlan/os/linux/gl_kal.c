@@ -3133,7 +3133,7 @@ static int idme_get_mac_addr(unsigned char *mac_addr, size_t addr_len)
 	}
 
 	old_fs = get_fs();
-	set_fs(get_ds());
+	set_fs(KERNEL_DS);
 	f->f_op->read(f, buf, IFHWADDRLEN * 2, &f->f_pos);
 	filp_close(f, NULL);
 	set_fs(old_fs);
@@ -3493,9 +3493,13 @@ VOID kalOsTimerInitialize(IN P_GLUE_INFO_T prGlueInfo, IN PVOID prTimerHandler)
 
 	ASSERT(prGlueInfo);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	init_timer(&(prGlueInfo->tickfn));
 	prGlueInfo->tickfn.function = prTimerHandler;
 	prGlueInfo->tickfn.data = (unsigned long)prGlueInfo;
+#else
+	timer_setup(&(prGlueInfo->tickfn), prTimerHandler, 0);
+#endif
 }
 
 /* Todo */
@@ -3596,10 +3600,17 @@ UINT_32 kalRandomNumber(VOID)
  * \retval (none)
  */
 /*----------------------------------------------------------------------------*/
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 VOID kalTimeoutHandler(unsigned long arg)
+#else
+VOID kalTimeoutHandler(struct timer_list *t)
+#endif
 {
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	P_GLUE_INFO_T prGlueInfo = (P_GLUE_INFO_T) arg;
+#else
+	P_GLUE_INFO_T prGlueInfo = from_timer(prGlueInfo, t, tickfn);
+#endif
 
 	ASSERT(prGlueInfo);
 
@@ -4028,7 +4039,7 @@ struct file *kalFileOpen(const char *path, int flags, int rights)
 	int err = 0;
 
 	oldfs = get_fs();
-	set_fs(get_ds());
+	set_fs(KERNEL_DS);
 	filp = filp_open(path, flags, rights);
 	set_fs(oldfs);
 	if (IS_ERR(filp)) {
@@ -4049,9 +4060,13 @@ UINT_32 kalFileRead(struct file *file, unsigned long long offset, unsigned char 
 	int ret;
 
 	oldfs = get_fs();
-	set_fs(get_ds());
+	set_fs(KERNEL_DS);
 
-	ret = vfs_read(file, data, size, &offset);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+    ret = vfs_read(file, data, size, &offset);
+#else
+    ret = kernel_read(file, data, size, &offset);
+#endif
 
 	set_fs(oldfs);
 	return ret;
@@ -4063,9 +4078,13 @@ UINT_32 kalFileWrite(struct file *file, unsigned long long offset, unsigned char
 	int ret;
 
 	oldfs = get_fs();
-	set_fs(get_ds());
+	set_fs(KERNEL_DS);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
 	ret = vfs_write(file, data, size, &offset);
+#else
+    ret = kernel_write(file, data, size, &offset);
+#endif
 
 	set_fs(oldfs);
 	return ret;
@@ -4973,6 +4992,7 @@ const struct file_operations rMetProcFops = {
 	.write = kalMetWriteProcfs
 };
 #endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 const struct file_operations rMetProcCtrlFops = {
 	.write = kalMetCtrlWriteProcfs
 };
@@ -4980,6 +5000,14 @@ const struct file_operations rMetProcCtrlFops = {
 const struct file_operations rMetProcPortFops = {
 	.write = kalMetPortWriteProcfs
 };
+#else
+const struct proc_ops rMetProcCtrlFops = {
+	.proc_write	= kalMetCtrlWriteProcfs,
+};
+const struct proc_ops rMetProcPortFops = {
+	.proc_write	= kalMetPortWriteProcfs,
+};
+#endif
 
 int kalMetInitProcfs(IN P_GLUE_INFO_T prGlueInfo)
 {
@@ -5058,10 +5086,16 @@ nla_put_failure:
 
 UINT_64 kalGetBootTime(void)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0)
 	struct timespec ts;
+#else
+	struct timespec64 ts;
+#endif
 	UINT_64 bootTime = 0;
 
-#if KERNEL_VERSION(2, 6, 39) <= LINUX_VERSION_CODE
+#if (KERNEL_VERSION(4, 20, 0) < LINUX_VERSION_CODE)
+	ktime_get_boottime_ts64(&ts);
+#elif (KERNEL_VERSION(2, 6, 39) <= LINUX_VERSION_CODE)
 	get_monotonic_boottime(&ts);
 #else
 	ts = ktime_to_timespec(ktime_get());

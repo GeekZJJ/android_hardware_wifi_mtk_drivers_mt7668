@@ -1989,7 +1989,11 @@ priv_set_driver(IN struct net_device *prNetDev,
 
 	ASSERT(IW_IS_GET(u2Cmd));
 	if (prIwReqData->data.length != 0) {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0))
 		if (!access_ok(VERIFY_READ, prIwReqData->data.pointer, prIwReqData->data.length)) {
+#else
+		if (!access_ok(prIwReqData->data.pointer, prIwReqData->data.length)) {
+#endif
 			DBGLOG(REQ, INFO, "%s access_ok Read fail written = %d\n", __func__, i4BytesWritten);
 			return -EFAULT;
 		}
@@ -2022,7 +2026,11 @@ priv_set_driver(IN struct net_device *prNetDev,
 	/* trick,hack in ./net/wireless/wext-priv.c ioctl_private_iw_point */
 	/* because the cmd number is even (set), the return string will not be copy_to_user */
 	ASSERT(IW_IS_SET(u2Cmd));
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+	if (!access_ok(prIwReqData->data.pointer, i4BytesWritten)) {
+#else
 	if (!access_ok(VERIFY_WRITE, prIwReqData->data.pointer, i4BytesWritten)) {
+#endif
 		DBGLOG(REQ, INFO, "%s access_ok Write fail written = %d\n", __func__, i4BytesWritten);
 		return -EFAULT;
 	}
