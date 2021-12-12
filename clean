@@ -1,0 +1,12 @@
+#!/bin/sh
+
+find -name "*.ko" | xargs rm
+find -name "*.o" | xargs rm
+find -name "*.o.cmd" | xargs rm
+find -name "*.order.cmd" | xargs rm
+find -name "*.mod.cmd" | xargs rm
+find -name "*.mod" | xargs rm
+find -name "*.order" | xargs rm
+find -name "*.cmd" | xargs rm
+find -name "*.symvers" | xargs rm
+find -name "*.mod.c" | xargs rm
