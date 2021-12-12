@@ -5,7 +5,9 @@
 *.ko
 *.so
 *.so.dbg
+*.mod
 *.mod.c
+*.mod.cmd
 *.i
 *.lst
 *.symtypes
